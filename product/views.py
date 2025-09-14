@@ -43,10 +43,35 @@ class ProductViewSet(viewsets.ModelViewSet):
 
                 #check for missing values
                 if  df.isnull().any().any(): 
-                    return Response(
-                        {'error':'Some rows have missing values.',
-                         "status":status.HTTP_400_BAD_REQUEST}
-                    )
+                    return Response({'error':'Some rows have missing values.'},
+                         status=status.HTTP_400_BAD_REQUEST)
+                
+                #check for invalid values
+                errors = []
+                for index, row in df.iterrows():
+                    row_errors = {}
+
+                    try:
+                        price = float(row['price'])
+                        if price < 0:
+                            row_errors['price'] = "Price must be non-negative"
+                    except Exception:
+                        row_errors['price'] = "Invalid price"
+
+                    try:
+                        if int(row['stock_qty']) < 0:
+                            row_errors['stock_qty'] = "Stock must be non-negative"
+                    except Exception:
+                        row_errors['stock_qty'] = "Invalid stock quantity"
+
+                    if str(row['status']).lower() not in ["active", "inactive"]:
+                        row_errors['status'] = "Must be 'active' or 'inactive'"
+
+                    if row_errors:
+                        errors.append({"row": int(index) + 2, "errors": row_errors})
+                
+                if errors:
+                    return Response({"validation_errors": errors}, status=status.HTTP_400_BAD_REQUEST)
                 
                 #store into the database
                 for _, row in df.iterrows():
@@ -65,7 +90,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
             
             except  Exception as e:
-                return Response({'error':str(e), 'status':status.HTTP_400_BAD_REQUEST})
+                return Response({'error':str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
