@@ -1,4 +1,4 @@
-# DataIngestionAPI
+# ProductUploadAPI
 
 A **Django REST Framework (DRF)** project that provides CRUD operations for products, along with the ability to **upload product data from CSV or Excel files**. The API also includes **validation** for missing or malformed data.
 
